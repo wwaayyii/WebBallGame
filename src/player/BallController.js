@@ -18,26 +18,32 @@ export class BallController {
 
     const v = this.body.linvel(), horizontal = Math.hypot(v.x, v.z);
     if (!length && grounded) {
-      // Rolling resistance is a force rather than an abrupt velocity multiplier,
-      // preserving more coasting distance after a faster run.
-      if (horizontal > 0) {
-        this.body.addForce({
-          x: -v.x / horizontal * CONFIG.ball.rollingResistance,
-          y: 0,
-          z: -v.z / horizontal * CONFIG.ball.rollingResistance
-        }, true);
-      }
-
       // Do not snap the ball to rest where gravity can overcome resistance. This
       // keeps shallow ramps physically active instead of behaving like brakes.
       const downhillForce = CONFIG.ball.mass * Math.abs(CONFIG.gravity)
         * Math.sqrt(Math.max(0, 1 - ground.normalY ** 2));
-      if (horizontal < CONFIG.ball.stopSpeed && downhillForce <= CONFIG.ball.rollingResistance) {
+      const canSettle = downhillForce <= CONFIG.ball.rollingResistance;
+
+      if (horizontal < CONFIG.ball.stopSpeed && canSettle) {
         this.body.setLinvel({ x: 0, y: v.y, z: 0 }, true);
         const angular = this.body.angvel();
-        if (Math.hypot(angular.x, angular.y, angular.z) < CONFIG.ball.angularStopSpeed) {
-          this.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
-        }
+        // Always remove residual rolling axes so friction cannot start the ball
+        // moving again. Preserve meaningful spin around the vertical axis.
+        this.body.setAngvel({
+          x: 0,
+          y: Math.abs(angular.y) < CONFIG.ball.angularStopSpeed ? 0 : angular.y,
+          z: 0
+        }, true);
+      } else if (horizontal > 0) {
+        // Cap the resistance at the force required to reach exactly zero during
+        // this fixed step, preventing low-speed braking from reversing direction.
+        const requiredStopForce = CONFIG.ball.mass * horizontal / CONFIG.fixedTimeStep;
+        const resistance = Math.min(CONFIG.ball.rollingResistance, requiredStopForce);
+        this.body.addForce({
+          x: -v.x / horizontal * resistance,
+          y: 0,
+          z: -v.z / horizontal * resistance
+        }, true);
       }
     }
 

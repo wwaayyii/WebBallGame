@@ -13,7 +13,7 @@ export const CONFIG = Object.freeze({
     angularDamping: 0.5,
     maxSpeed: 10,
     // Force opposing horizontal motion after input is released while grounded.
-    rollingResistance: 2.6,
+    rollingResistance: 4.5,
     // Below this speed the last tiny drift is removed on level ground only.
     stopSpeed: 0.12,
     angularStopSpeed: 0.15
