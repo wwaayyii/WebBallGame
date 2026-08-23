@@ -1,5 +1,6 @@
 // Central tuning surface for the phase-one physics prototype.
 export const CONFIG = Object.freeze({
+  debugPhysics: true,
   gravity: -18, // Stronger than Earth gravity keeps the ball planted on ramps.
   fixedTimeStep: 1 / 60, // Physics stays independent from render refresh rate.
   maxSubSteps: 5,
