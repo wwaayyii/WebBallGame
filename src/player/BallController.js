@@ -12,8 +12,9 @@ export class BallController {
     const move = input.movement, length = Math.hypot(move.x, move.z);
     const grounded = Boolean(ground);
     if (length) {
-      const scale = CONFIG.ball.moveForce * (grounded ? 1 : CONFIG.ball.airControl) / length;
-      this.body.addForce({ x: move.x * scale, y: 0, z: move.z * scale }, true);
+      const impulse = CONFIG.ball.moveForce * CONFIG.fixedTimeStep
+        * (grounded ? 1 : CONFIG.ball.airControl) / length;
+      this.body.applyImpulse({ x: move.x * impulse, y: 0, z: move.z * impulse }, true);
     }
 
     const v = this.body.linvel(), horizontal = Math.hypot(v.x, v.z);
@@ -35,14 +36,16 @@ export class BallController {
           z: 0
         }, true);
       } else if (horizontal > 0) {
-        // Cap the resistance at the force required to reach exactly zero during
-        // this fixed step, preventing low-speed braking from reversing direction.
-        const requiredStopForce = CONFIG.ball.mass * horizontal / CONFIG.fixedTimeStep;
-        const resistance = Math.min(CONFIG.ball.rollingResistance, requiredStopForce);
-        this.body.addForce({
-          x: -v.x / horizontal * resistance,
+        // A one-step impulse cannot exceed current horizontal momentum, so the
+        // brake cannot persist across steps or reverse the ball at low speed.
+        const resistanceImpulse = Math.min(
+          CONFIG.ball.rollingResistance * CONFIG.fixedTimeStep,
+          CONFIG.ball.mass * horizontal
+        );
+        this.body.applyImpulse({
+          x: -v.x / horizontal * resistanceImpulse,
           y: 0,
-          z: -v.z / horizontal * resistance
+          z: -v.z / horizontal * resistanceImpulse
         }, true);
       }
     }
@@ -50,5 +53,6 @@ export class BallController {
     if (horizontal > CONFIG.ball.maxSpeed) this.body.setLinvel({ x: v.x / horizontal * CONFIG.ball.maxSpeed, y: v.y, z: v.z / horizontal * CONFIG.ball.maxSpeed }, true);
   }
   sync() { const p=this.body.translation(), q=this.body.rotation(); this.mesh.position.set(p.x,p.y,p.z); this.mesh.quaternion.set(q.x,q.y,q.z,q.w); }
-  teleport(p) { this.body.setTranslation(p, true); this.body.setLinvel({x:0,y:0,z:0}, true); this.body.setAngvel({x:0,y:0,z:0}, true); this.body.setRotation({x:0,y:0,z:0,w:1}, true); }
+  clearExternalLoads() { this.body.resetForces(false); this.body.resetTorques(false); }
+  teleport(p) { this.clearExternalLoads(); this.body.setTranslation(p, true); this.body.setLinvel({x:0,y:0,z:0}, true); this.body.setAngvel({x:0,y:0,z:0}, true); this.body.setRotation({x:0,y:0,z:0,w:1}, true); }
 }
