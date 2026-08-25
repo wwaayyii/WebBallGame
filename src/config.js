@@ -22,5 +22,18 @@ export const CONFIG = Object.freeze({
   respawnHeight: -10,
   respawnDelay: 1,
   initialLives: 3,
-  spawn: { x: 0, y: 2.2, z: 8 }
+  spawn: { x: 0, y: 2.2, z: 8 },
+  camera: {
+    distance: 11.2,
+    targetHeight: 0.65,
+    defaultYaw: 0,
+    defaultPitch: 0.5,
+    minPitch: 0.18,
+    maxPitch: 1.15,
+    mouseSensitivity: 0.004,
+    keyboardYawSpeed: 1.65,
+    positionSmoothing: 7,
+    targetSmoothing: 10,
+    resetSmoothing: 6
+  }
 });

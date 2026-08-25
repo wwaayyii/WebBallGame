@@ -12,8 +12,8 @@ export class BallController {
     this.snapStopped = false;
     this.movedAfterStopLogged = false;
   }
-  update(input, ground, state = 'PLAYING') {
-    const move = input.movement, length = Math.hypot(move.x, move.z);
+  update(move, ground, state = 'PLAYING') {
+    const length = Math.hypot(move.x, move.z);
     const grounded = Boolean(ground);
     let action = grounded ? 'IDLE_NO_ACTION' : 'AIRBORNE_NO_BRAKE';
     let downhillForce = null, canSettle = null, brake = null;
