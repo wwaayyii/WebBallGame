@@ -3,16 +3,37 @@ import { CONFIG } from '../config.js';
 export class BallController {
   constructor(scene, physics) {
     const R = physics.RAPIER;
-    this.body = physics.world.createRigidBody(R.RigidBodyDesc.dynamic().setTranslation(CONFIG.spawn.x, CONFIG.spawn.y, CONFIG.spawn.z).setLinearDamping(CONFIG.ball.linearDamping).setAngularDamping(CONFIG.ball.angularDamping).setCcdEnabled(true));
-    physics.world.createCollider(R.ColliderDesc.ball(CONFIG.ball.radius).setDensity(CONFIG.ball.mass / (4 / 3 * Math.PI * CONFIG.ball.radius ** 3)).setFriction(CONFIG.ball.friction).setRestitution(.05), this.body);
-    this.mesh = new THREE.Mesh(new THREE.SphereGeometry(CONFIG.ball.radius, 32, 20), new THREE.MeshStandardMaterial({ color: 0xb97842, roughness: .7, metalness: .03 }));
+    const initial = CONFIG.ball.types[CONFIG.ball.defaultType];
+    this.body = physics.world.createRigidBody(R.RigidBodyDesc.dynamic().setTranslation(CONFIG.spawn.x, CONFIG.spawn.y, CONFIG.spawn.z).setLinearDamping(initial.linearDamping).setAngularDamping(initial.angularDamping).setCcdEnabled(true));
+    this.collider = physics.world.createCollider(R.ColliderDesc.ball(CONFIG.ball.radius).setMass(initial.mass).setFriction(initial.friction).setRestitution(.05), this.body);
+    this.material = new THREE.MeshStandardMaterial({ color: initial.color, roughness: initial.roughness, metalness: initial.metalness });
+    this.mesh = new THREE.Mesh(new THREE.SphereGeometry(CONFIG.ball.radius, 32, 20), this.material);
     this.mesh.castShadow = true; scene.add(this.mesh);
+    this.currentType = CONFIG.ball.defaultType;
     this.lastDebugTime = -Infinity;
     this.belowStopSpeedLogged = false;
     this.snapStopped = false;
     this.movedAfterStopLogged = false;
   }
+  get tuning() { return CONFIG.ball.types[this.currentType]; }
+  setBallType(type) {
+    const next = CONFIG.ball.types[type];
+    if (!next) throw new RangeError(`Unknown ball type: ${type}`);
+    if (type === this.currentType) return false;
+    this.collider.setMass(next.mass);
+    this.body.recomputeMassPropertiesFromColliders();
+    this.collider.setFriction(next.friction);
+    this.body.setLinearDamping(next.linearDamping);
+    this.body.setAngularDamping(next.angularDamping);
+    this.material.color.setHex(next.color);
+    this.material.roughness = next.roughness;
+    this.material.metalness = next.metalness;
+    this.material.needsUpdate = true;
+    this.currentType = type;
+    return true;
+  }
   update(move, ground, state = 'PLAYING') {
+    const tuning = this.tuning;
     const length = Math.hypot(move.x, move.z);
     const grounded = Boolean(ground);
     let action = grounded ? 'IDLE_NO_ACTION' : 'AIRBORNE_NO_BRAKE';
@@ -21,8 +42,8 @@ export class BallController {
       this.snapStopped = false;
       this.movedAfterStopLogged = false;
       this.belowStopSpeedLogged = false;
-      const impulse = CONFIG.ball.moveForce * CONFIG.fixedTimeStep
-        * (grounded ? 1 : CONFIG.ball.airControl) / length;
+      const impulse = tuning.moveForce * CONFIG.fixedTimeStep
+        * (grounded ? 1 : tuning.airControl) / length;
       this.body.applyImpulse({ x: move.x * impulse, y: 0, z: move.z * impulse }, true);
       action = grounded ? 'DRIVE_GROUND' : 'DRIVE_AIR';
     }
@@ -31,9 +52,9 @@ export class BallController {
     if (!length && grounded) {
       // Do not snap the ball to rest where gravity can overcome resistance. This
       // keeps shallow ramps physically active instead of behaving like brakes.
-      downhillForce = CONFIG.ball.mass * Math.abs(CONFIG.gravity)
+      downhillForce = this.body.mass() * Math.abs(CONFIG.gravity)
         * Math.sqrt(Math.max(0, 1 - ground.normalY ** 2));
-      canSettle = downhillForce <= CONFIG.ball.rollingResistance;
+      canSettle = downhillForce <= tuning.rollingResistance;
 
       if (horizontal < CONFIG.ball.stopSpeed && canSettle) {
         action = 'SNAP_STOP';
@@ -51,15 +72,15 @@ export class BallController {
         // A one-step impulse cannot exceed current horizontal momentum, so the
         // brake cannot persist across steps or reverse the ball at low speed.
         const resistanceImpulse = Math.min(
-          CONFIG.ball.rollingResistance * CONFIG.fixedTimeStep,
-          CONFIG.ball.mass * horizontal
+          tuning.rollingResistance * CONFIG.fixedTimeStep,
+          this.body.mass() * horizontal
         );
         this.body.applyImpulse({
           x: -v.x / horizontal * resistanceImpulse,
           y: 0,
           z: -v.z / horizontal * resistanceImpulse
         }, true);
-        brake = { resistanceImpulse, currentHorizontalMomentum: CONFIG.ball.mass * horizontal, impulseX: -v.x / horizontal * resistanceImpulse, impulseZ: -v.z / horizontal * resistanceImpulse };
+        brake = { resistanceImpulse, currentHorizontalMomentum: this.body.mass() * horizontal, impulseX: -v.x / horizontal * resistanceImpulse, impulseZ: -v.z / horizontal * resistanceImpulse };
       } else if (!canSettle) {
         action = 'COAST_ON_SLOPE';
       }
@@ -67,12 +88,12 @@ export class BallController {
 
     if (CONFIG.debugPhysics) this.debug({ state, move, length, grounded, ground, v, horizontal, downhillForce, canSettle, action, brake });
 
-    if (horizontal > CONFIG.ball.maxSpeed) this.body.setLinvel({ x: v.x / horizontal * CONFIG.ball.maxSpeed, y: v.y, z: v.z / horizontal * CONFIG.ball.maxSpeed }, true);
+    if (horizontal > tuning.maxSpeed) this.body.setLinvel({ x: v.x / horizontal * tuning.maxSpeed, y: v.y, z: v.z / horizontal * tuning.maxSpeed }, true);
   }
   debug({ state, move, length, grounded, ground, v, horizontal, downhillForce, canSettle, action, brake }) {
     const angular=this.body.angvel(), userForce=this.body.userForce(), position=this.body.translation();
     const vector=(value)=>({x:value.x,y:value.y,z:value.z});
-    const details={ state,inputX:move.x,inputZ:move.z,inputLength:length,grounded,groundNormalY:ground?.normalY??null,position:vector(position),velocity:vector(v),horizontalSpeed:horizontal,angularVelocity:vector(angular),bodyMass:this.body.mass(),userForce:vector(userForce),isSleeping:this.body.isSleeping(),downhillForce,canSettle,rollingResistance:CONFIG.ball.rollingResistance,stopSpeed:CONFIG.ball.stopSpeed,action,...brake };
+    const details={ state,ballType:this.currentType,inputX:move.x,inputZ:move.z,inputLength:length,grounded,groundNormalY:ground?.normalY??null,position:vector(position),velocity:vector(v),horizontalSpeed:horizontal,angularVelocity:vector(angular),bodyMass:this.body.mass(),userForce:vector(userForce),isSleeping:this.body.isSleeping(),downhillForce,canSettle,rollingResistance:this.tuning.rollingResistance,stopSpeed:CONFIG.ball.stopSpeed,action,...brake };
     if (horizontal<CONFIG.ball.stopSpeed && !this.belowStopSpeedLogged) { console.debug('[BallDebug] below-stop-speed', details); this.belowStopSpeedLogged=true; }
     if (action==='SNAP_STOP' && !this.snapStopped) { console.debug('[BallDebug] snap-stop', details); this.snapStopped=true; }
     if (this.snapStopped && horizontal>CONFIG.ball.stopSpeed && !this.movedAfterStopLogged) { console.warn('[BallDebug] moved-after-stop', { velocity:details.velocity,angularVelocity:details.angularVelocity,grounded,groundNormalY:details.groundNormalY,userForce:details.userForce,isSleeping:details.isSleeping }); this.movedAfterStopLogged=true; }
