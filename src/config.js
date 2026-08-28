@@ -6,18 +6,14 @@ export const CONFIG = Object.freeze({
   maxSubSteps: 5,
   ball: {
     radius: 0.65,
-    mass: 2.2,
-    moveForce: 19, // Continuous force; Rapier integration creates natural rolling.
-    airControl: 0.16, // Small fraction of ground authority while airborne.
-    friction: 1.35,
-    linearDamping: 0.32,
-    angularDamping: 0.5,
-    maxSpeed: 10,
-    // Force opposing horizontal motion after input is released while grounded.
-    rollingResistance: 4.5,
-    // Below this speed the last tiny drift is removed on level ground only.
+    defaultType: 'wood',
     stopSpeed: 0.12,
-    angularStopSpeed: 0.15
+    angularStopSpeed: 0.15,
+    types: {
+      wood: { mass: 2.2, moveForce: 19, friction: 1.35, linearDamping: 0.32, angularDamping: 0.5, maxSpeed: 10, airControl: 0.16, rollingResistance: 4.5, color: 0xb97842, roughness: 0.7, metalness: 0.03 },
+      stone: { mass: 5.5, moveForce: 28, friction: 1.5, linearDamping: 0.38, angularDamping: 0.55, maxSpeed: 8, airControl: 0.07, rollingResistance: 7, color: 0x777d83, roughness: 0.95, metalness: 0.02 },
+      paper: { mass: 0.3, moveForce: 3.2, friction: 0.65, linearDamping: 0.5, angularDamping: 0.7, maxSpeed: 11, airControl: 0.25, rollingResistance: 0.64, color: 0xeee5ce, roughness: 0.58, metalness: 0 }
+    }
   },
   respawnHeight: -10,
   respawnDelay: 1,
