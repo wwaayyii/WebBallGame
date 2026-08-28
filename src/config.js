@@ -18,7 +18,7 @@ export const CONFIG = Object.freeze({
   respawnHeight: -10,
   respawnDelay: 1,
   initialLives: 3,
-  spawn: { x: 0, y: 2.2, z: 8 },
+  spawn: { x: 0, y: 1.21, z: 8 },
   camera: {
     distance: 11.2,
     targetHeight: 0.65,
