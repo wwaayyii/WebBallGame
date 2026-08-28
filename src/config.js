@@ -12,7 +12,7 @@ export const CONFIG = Object.freeze({
     types: {
       wood: { mass: 2.2, moveForce: 19, friction: 1.35, linearDamping: 0.32, angularDamping: 0.5, maxSpeed: 10, airControl: 0.16, rollingResistance: 4.5, color: 0xb97842, roughness: 0.7, metalness: 0.03 },
       stone: { mass: 5.5, moveForce: 28, friction: 1.5, linearDamping: 0.38, angularDamping: 0.55, maxSpeed: 8, airControl: 0.07, rollingResistance: 7, color: 0x777d83, roughness: 0.95, metalness: 0.02 },
-      paper: { mass: 0.75, moveForce: 8, friction: 0.8, linearDamping: 0.45, angularDamping: 0.65, maxSpeed: 11, airControl: 0.25, rollingResistance: 1.6, color: 0xeee5ce, roughness: 0.58, metalness: 0 }
+      paper: { mass: 0.3, moveForce: 3.2, friction: 0.65, linearDamping: 0.5, angularDamping: 0.7, maxSpeed: 11, airControl: 0.25, rollingResistance: 0.64, color: 0xeee5ce, roughness: 0.58, metalness: 0 }
     }
   },
   respawnHeight: -10,

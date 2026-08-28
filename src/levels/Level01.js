@@ -10,7 +10,7 @@ export class Level01 {
     this.box({x:0,y:.7,z:-7},{x:4.5,y:.7,z:8},0x71829a,.14); this.box({x:0,y:1.28,z:-13},{x:3.2,y:.55,z:5});
     this.box({x:0,y:1.28,z:-19},{x:1.75,y:.45,z:7},0x8899aa); this.box({x:0,y:1.28,z:-24},{x:4.5,y:.55,z:3.5});
     this.checkpoint=new Checkpoint(this.scene,{x:0,y:1.9,z:-24});
-    this.seesaw=new Seesaw(this.scene,this.physics,{x:0,y:1.85,z:-28.8});
+    this.seesaw=new Seesaw(this.scene,this.physics,{x:0,y:1.52,z:-28.875});
     this.box({x:0,y:1.28,z:-34},{x:4.5,y:.55,z:4}); this.box({x:0,y:1.28,z:-39},{x:8,y:.7,z:7},0x5f7893);
     this.finish=new FinishZone(this.scene,{x:0,y:1.68,z:-39});
   }
