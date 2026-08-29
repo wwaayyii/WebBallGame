@@ -9,12 +9,11 @@ export class Level01 {
     this.box({x:0,y:0,z:7},{x:8,y:1,z:7},0x60758e);
     this.spawnBasin = new ShallowBasin(this.scene,this.physics,{x:0,y:.54,z:8},{radius:1.4,innerRadius:.72,depth:.08,segments:12,color:0x6f849c});
     this.transformPads = [new TransformPad(this.scene,this.physics,{x:-2.5,y:.56,z:5.8},'wood'),new TransformPad(this.scene,this.physics,{x:-2.5,y:.56,z:8.8},'stone'),new TransformPad(this.scene,this.physics,{x:2.5,y:.56,z:8.8},'paper')];
-    // A short side route keeps all existing obstacles intact while allowing
-    // repeated crosswind runs immediately after choosing a ball material.
-    this.box({x:5.25,y:0,z:7},{x:2.5,y:1,z:3},0x68839a);
-    this.box({x:11.5,y:0,z:7},{x:13,y:1,z:7},0x5b7891);
-    this.box({x:11.5,y:1,z:3.65},{x:13,y:1,z:.3},0x87a8b6);
-    this.box({x:11.5,y:1,z:10.35},{x:13,y:1,z:.3},0x87a8b6);
+    // Meet the spawn platform flush: a partial bridge left ball-sized slots
+    // on either side of its entrance.
+    this.box({x:11,y:0,z:7},{x:14,y:1,z:7},0x5b7891);
+    this.box({x:11,y:1,z:3.65},{x:14,y:1,z:.3},0x87a8b6);
+    this.box({x:11,y:1,z:10.35},{x:14,y:1,z:.3},0x87a8b6);
     this.box({x:18.15,y:1,z:7},{x:.3,y:1,z:7},0x87a8b6);
     this.windZone = new WindZone(this.scene);
     this.box({x:0,y:0,z:0},{x:4.5,y:.8,z:8});

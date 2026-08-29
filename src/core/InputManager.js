@@ -5,11 +5,13 @@ export class InputManager {
     this.keys = new Set();
     this.cameraDrag = { x: 0, y: 0 };
     this.resetViewRequested = false;
+    this.unstuckRequested = false;
     this.dragging = false;
     this.lastPointer = { x: 0, y: 0 };
     this.onDown = (e) => {
-      if (['KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','KeyR'].includes(e.code)) e.preventDefault();
+      if (['KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','KeyR','KeyT'].includes(e.code)) e.preventDefault();
       if (e.code === 'KeyR' && !e.repeat && !this.keys.has(e.code)) this.resetViewRequested = true;
+      if (e.code === 'KeyT' && !e.repeat && !this.keys.has(e.code)) this.unstuckRequested = true;
       if (this.keys.has(e.code)) return;
       this.keys.add(e.code);
       this.log('keydown', e.code);
@@ -20,6 +22,7 @@ export class InputManager {
     };
     this.onBlur = () => {
       this.keys.clear();
+      this.unstuckRequested = false;
       this.endDrag();
       if (CONFIG.debugPhysics) console.debug('[InputDebug] blur-clear');
     };
@@ -52,5 +55,6 @@ export class InputManager {
   get cameraYaw() { return (this.keys.has('KeyE') ? 1 : 0) - (this.keys.has('KeyQ') ? 1 : 0); }
   consumeCameraDrag() { const drag = { ...this.cameraDrag }; this.cameraDrag.x = 0; this.cameraDrag.y = 0; return drag; }
   consumeResetView() { const requested = this.resetViewRequested; this.resetViewRequested = false; return requested; }
+  consumeUnstuck() { const requested = this.unstuckRequested; this.unstuckRequested = false; return requested; }
   log(event, code) { if (!CONFIG.debugPhysics) return; const movement=this.movement; console.debug(`[InputDebug] ${event}`, { code, keys:[...this.keys], inputX:movement.x, inputZ:movement.z }); }
 }
