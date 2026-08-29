@@ -1,12 +1,14 @@
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
+import { getBallMaterials } from '../materials/BallMaterials.js';
 export class BallController {
   constructor(scene, physics) {
     const R = physics.RAPIER;
     const initial = CONFIG.ball.types[CONFIG.ball.defaultType];
     this.body = physics.world.createRigidBody(R.RigidBodyDesc.dynamic().setTranslation(CONFIG.spawn.x, CONFIG.spawn.y, CONFIG.spawn.z).setLinearDamping(initial.linearDamping).setAngularDamping(initial.angularDamping).setCcdEnabled(true));
     this.collider = physics.world.createCollider(R.ColliderDesc.ball(CONFIG.ball.radius).setMass(initial.mass).setFriction(initial.friction).setRestitution(.05), this.body);
-    this.material = new THREE.MeshStandardMaterial({ color: initial.color, roughness: initial.roughness, metalness: initial.metalness });
+    this.materials = getBallMaterials();
+    this.material = this.materials[CONFIG.ball.defaultType];
     this.mesh = new THREE.Mesh(new THREE.SphereGeometry(CONFIG.ball.radius, 32, 20), this.material);
     this.mesh.castShadow = true; scene.add(this.mesh);
     this.currentType = CONFIG.ball.defaultType;
@@ -25,10 +27,8 @@ export class BallController {
     this.collider.setFriction(next.friction);
     this.body.setLinearDamping(next.linearDamping);
     this.body.setAngularDamping(next.angularDamping);
-    this.material.color.setHex(next.color);
-    this.material.roughness = next.roughness;
-    this.material.metalness = next.metalness;
-    this.material.needsUpdate = true;
+    this.material = this.materials[type];
+    this.mesh.material = this.material;
     this.currentType = type;
     return true;
   }
