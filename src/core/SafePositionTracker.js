@@ -50,12 +50,7 @@ export class SafePositionTracker {
     const lifted = { x: position.x, y: position.y + .08, z: position.z };
     const shape = new R.Ball(CONFIG.ball.radius * .96);
     return !this.physics.world.intersectionWithShape(lifted, IDENTITY, shape,
-      undefined, undefined, this.ball.collider, this.ball.body, collider => {
-        const parent = collider.parent();
-        if (!parent?.isFixed()) return true;
-        const center = collider.translation();
-        return center.y > lifted.y - CONFIG.ball.radius;
-      });
+      undefined, undefined, this.ball.collider, this.ball.body);
   }
   resetCandidate() { this.candidate = null; this.candidateTime = 0; }
   horizontalDistance(a, b) { return Math.hypot(a.x - b.x, a.z - b.z); }
