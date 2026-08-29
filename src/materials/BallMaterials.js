@@ -118,6 +118,33 @@ function createPaperPattern() {
 
 const paperPattern = createPaperPattern();
 
+function createNewspaperLayout() {
+  const random = rng(4704);
+  const titles = ['DAILY ROLL', 'SKY TIMES', 'BALL NEWS', 'MORNING EDITION', 'CITY ROUND', 'LATE ROLL'];
+  const positions = [
+    [30, 104, -.13], [190, 90, .08], [355, 112, -.06],
+    [82, 302, .11], [252, 286, -.1], [438, 310, .06],
+  ];
+  return positions.map(([x, y, angle], index) => ({
+    x,
+    y,
+    angle,
+    title: titles[index],
+    width: 138 + random() * 24,
+    columns: 2 + index % 3,
+    pictureColumn: index % (2 + index % 3),
+    lineLengths: Array.from({ length: 40 }, () => .55 + random() * .45),
+    dots: Array.from({ length: 13 }, () => ({
+      x: (random() - .5) * 130,
+      y: random() * 132,
+      radius: .35 + random() * 1.25,
+      alpha: .08 + random() * .16,
+    })),
+  }));
+}
+
+const newspaperLayout = createNewspaperLayout();
+
 function paperBase(ctx, bump) {
   const data = ctx.createImageData(SIZE, SIZE);
   for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
@@ -139,6 +166,64 @@ function paperBase(ctx, bump) {
 
 function strokeWrapped(ctx, feature, draw) {
   for (const offset of [-SIZE, 0, SIZE]) draw(offset);
+}
+
+function drawNewspaper(ctx) {
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  for (const region of newspaperLayout) {
+    for (const wrap of [-SIZE, 0, SIZE]) {
+      ctx.save();
+      ctx.translate(region.x + wrap, region.y);
+      ctx.rotate(region.angle);
+      const left = -region.width / 2;
+
+      ctx.fillStyle = 'rgba(55,58,57,.88)';
+      ctx.font = `700 ${region.title.length > 12 ? 13 : 16}px Arial, sans-serif`;
+      ctx.fillText(region.title, left, 0, region.width);
+      ctx.fillRect(left, 20, region.width, 3.2);
+
+      const gap = 5;
+      const columnWidth = (region.width - gap * (region.columns - 1)) / region.columns;
+      let lineIndex = 0;
+      for (let column = 0; column < region.columns; column++) {
+        const columnX = left + column * (columnWidth + gap);
+        const hasPicture = column === region.pictureColumn;
+        let lineY = 29;
+        if (hasPicture) {
+          const pictureHeight = 31 + (region.columns === 2 ? 8 : 0);
+          ctx.fillStyle = 'rgba(104,106,101,.6)';
+          ctx.fillRect(columnX, lineY, columnWidth, pictureHeight);
+          ctx.strokeStyle = 'rgba(61,64,62,.82)';
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(columnX, lineY, columnWidth, pictureHeight);
+          ctx.beginPath();
+          ctx.moveTo(columnX + 2, lineY + pictureHeight - 3);
+          ctx.lineTo(columnX + columnWidth * .38, lineY + pictureHeight * .42);
+          ctx.lineTo(columnX + columnWidth * .58, lineY + pictureHeight * .68);
+          ctx.lineTo(columnX + columnWidth - 2, lineY + 4);
+          ctx.stroke();
+          lineY += pictureHeight + 6;
+        }
+        ctx.fillStyle = 'rgba(82,85,83,.8)';
+        while (lineY < 138) {
+          const length = columnWidth * region.lineLengths[lineIndex++ % region.lineLengths.length];
+          ctx.fillRect(columnX, lineY, length, 2.05);
+          lineY += 5.2;
+        }
+      }
+
+      ctx.fillStyle = 'rgba(48,51,50,.66)';
+      for (const dot of region.dots) {
+        ctx.globalAlpha = dot.alpha;
+        ctx.beginPath();
+        ctx.arc(dot.x, dot.y, dot.radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+  }
 }
 
 function drawPaperLines(ctx, bump) {
@@ -173,6 +258,7 @@ function drawPaperLines(ctx, bump) {
 
 function paperColor(ctx) {
   paperBase(ctx, false);
+  drawNewspaper(ctx);
   drawPaperLines(ctx, false);
 }
 
