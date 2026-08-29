@@ -19,6 +19,13 @@ export const CONFIG = Object.freeze({
   respawnDelay: 1,
   initialLives: 3,
   spawn: { x: 0, y: 1.21, z: 8 },
+  windZone: {
+    force: 2.4,
+    direction: { x: 1, y: 0, z: 0 },
+    bounds: { center: { x: 11.5, y: 1.2, z: 7 }, size: { x: 13, y: 3.2, z: 6 } },
+    particleSpeed: 5.5,
+    maxParticleCount: 48
+  },
   camera: {
     distance: 11.2,
     targetHeight: 0.65,
